@@ -228,8 +228,13 @@ public class LogInPanel extends javax.swing.JPanel {
         return accepted.getResultList();
     }
     
-    private void notifyStudent(List<Appointment> appointments) {
+    private void updateNotified(Appointment appointment,short i) {
         this.entityManager.getTransaction().begin();
+        appointment.setNotified((short) 1);
+        this.entityManager.getTransaction().commit();   
+    }
+    
+    private void notifyStudent(List<Appointment> appointments) {
         for (Appointment appointment : appointments) {
             this.entityManager.refresh(appointment);
             System.out.println(appointment.getStatus());
@@ -240,7 +245,7 @@ public class LogInPanel extends javax.swing.JPanel {
                         .atZone(ZoneId.systemDefault())
                         .toLocalDate();
                     JOptionPane.showMessageDialog(this.parentFrame, "You are scheduled at " + Utils.defaultDateFormat.format(createdDate), "Notification", JOptionPane.INFORMATION_MESSAGE);
-                    appointment.setNotified((short) 1);
+                    updateNotified(appointment, (short)1);
                     break;
                 case "rescheduled":
                     LocalDate reschedDate = appointment.getRescheduleDate()
@@ -248,15 +253,14 @@ public class LogInPanel extends javax.swing.JPanel {
                         .atZone(ZoneId.systemDefault())
                         .toLocalDate();
                     JOptionPane.showMessageDialog(this.parentFrame, "You have been rescheduled at " + Utils.defaultDateFormat.format(reschedDate), "Notification", JOptionPane.INFORMATION_MESSAGE);
-                    appointment.setNotified((short) 1);
+                    updateNotified(appointment, (short)1);
                     break;
                 case "declined":
                     JOptionPane.showMessageDialog(this.parentFrame, "Sorry, Your appointment was Declined.", "Notification", JOptionPane.INFORMATION_MESSAGE);
-                    appointment.setNotified((short) 1);
+                    updateNotified(appointment, (short)1);
                     break;
             }
 
         }
-        this.entityManager.getTransaction().commit();   
     }
 }
