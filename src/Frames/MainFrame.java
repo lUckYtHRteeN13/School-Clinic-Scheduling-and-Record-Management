@@ -132,7 +132,7 @@ public class MainFrame extends javax.swing.JFrame {
                 TypedQuery<Appointment> query = this.entityManager.createNamedQuery("Appointment.findByStatus", Appointment.class);
                 query.setParameter("status", status);
                 for (Appointment appointment : query.getResultList()) {
-//                    this.entityManager.refresh(appointment);
+                    this.entityManager.refresh(appointment);
                     list.add(appointment);
                 }
             });
@@ -147,7 +147,6 @@ public class MainFrame extends javax.swing.JFrame {
                 e.printStackTrace();
             }
         }
-        
         
         return list;
     }
