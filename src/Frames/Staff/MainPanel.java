@@ -70,7 +70,8 @@ public class MainPanel extends javax.swing.JPanel {
     
     private MedicalStaff staff;
     private final int PAGE_SIZE = 10;
-    private int currentPage = 0;
+    private int currentPatientPage = 0;
+    private int currentAppointmentPage;
     private boolean isPatientSearchEmpty = true;
     
     private List<Student> students = new ArrayList<>();
@@ -90,6 +91,7 @@ public class MainPanel extends javax.swing.JPanel {
     private DefaultTableModel doctorsTableModel;
     private DefaultTableModel patientsListTableModel;
     private DefaultTableModel pendingAppointmentTableModel;
+    private DefaultTableModel appointmentTableModel;
     
     
     private final DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
@@ -175,6 +177,8 @@ public class MainPanel extends javax.swing.JPanel {
         setAppointmentBTN = new javax.swing.JButton();
         appointmentsPanel = new javax.swing.JPanel();
         jLabel10 = new javax.swing.JLabel();
+        jScrollPane6 = new javax.swing.JScrollPane();
+        appointmentsTable = new javax.swing.JTable();
         patient = new javax.swing.JPanel();
         layeredPane2 = new javax.swing.JLayeredPane();
         jPanel2 = new javax.swing.JPanel();
@@ -422,6 +426,77 @@ public class MainPanel extends javax.swing.JPanel {
         appointmentsPanel.add(jLabel10);
         jLabel10.setBounds(0, 20, 830, 40);
 
+        jScrollPane6.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        jScrollPane6.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        jScrollPane6.setToolTipText("");
+        jScrollPane6.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+        jScrollPane6.setViewportView(appointmentsTable);
+
+        appointmentsTable.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "Patient", "Course", "College", "Requested", "Status"
+            }
+        ) {
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false, false
+            };
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        appointmentsTable.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+        appointmentsTable.setFillsViewportHeight(true);
+        appointmentsTable.setGridColor(new java.awt.Color(204, 204, 204));
+        appointmentsTable.setRowHeight(39);
+        appointmentsTable.setSelectionBackground(new java.awt.Color(204, 204, 204));
+        appointmentsTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        appointmentsTable.setShowGrid(false);
+        appointmentsTable.setShowHorizontalLines(true);
+        appointmentsTable.getTableHeader().setResizingAllowed(false);
+        appointmentsTable.getTableHeader().setReorderingAllowed(false);
+        appointmentsTable.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+            public void mouseMoved(java.awt.event.MouseEvent evt) {
+                appointmentsTableMouseMoved(evt);
+            }
+        });
+        appointmentsTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                appointmentsTableMouseClicked(evt);
+            }
+        });
+        jScrollPane6.setViewportView(appointmentsTable);
+        appointmentsTable.getColumnModel().getSelectionModel().setSelectionMode(javax.swing.ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        if (appointmentsTable.getColumnModel().getColumnCount() > 0) {
+            appointmentsTable.getColumnModel().getColumn(0).setResizable(false);
+            appointmentsTable.getColumnModel().getColumn(1).setResizable(false);
+            appointmentsTable.getColumnModel().getColumn(2).setResizable(false);
+            appointmentsTable.getColumnModel().getColumn(3).setResizable(false);
+            appointmentsTable.getColumnModel().getColumn(4).setResizable(false);
+        }
+        this.appointmentTableModel = (DefaultTableModel) this.appointmentsTable.getModel();
+
+        TableRowSorter<DefaultTableModel> appointmentSorter = new TableRowSorter<>(appointmentTableModel);
+        this.appointmentsTable.setRowSorter(appointmentSorter);
+
+        this.appointmentsTable.getColumnModel().getColumn(1).setPreferredWidth(30);
+        this.appointmentsTable.getColumnModel().getColumn(2).setPreferredWidth(30);
+        this.appointmentsTable.getColumnModel().getColumn(3).setPreferredWidth(30);
+        this.appointmentsTable.getColumnModel().getColumn(4).setPreferredWidth(30);
+
+        //this.patientsTable.getColumnModel().getColumn(5).setCellRenderer(clickableRenderer);
+        this.appointmentsTable.getColumnModel().getColumn(0).setCellRenderer(indexRenderer);
+
+        for (int i = 1; i < this.appointmentsTable.getColumnCount() - 1; i++) {
+            this.appointmentsTable.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
+        }
+
+        appointmentsPanel.add(jScrollPane6);
+        jScrollPane6.setBounds(10, 130, 810, 413);
+
         jLayeredPane1.add(appointmentsPanel);
         appointmentsPanel.setBounds(0, 0, 830, 600);
 
@@ -487,6 +562,7 @@ public class MainPanel extends javax.swing.JPanel {
             patientsTable.getColumnModel().getColumn(3).setResizable(false);
             patientsTable.getColumnModel().getColumn(4).setResizable(false);
             patientsTable.getColumnModel().getColumn(5).setResizable(false);
+            patientsTable.getColumnModel().getColumn(5).setHeaderValue("");
         }
         this.patientsListTableModel = (DefaultTableModel) this.patientsTable.getModel();
 
@@ -780,6 +856,7 @@ public class MainPanel extends javax.swing.JPanel {
     private void appointmentsBTNActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_appointmentsBTNActionPerformed
         // TODO add your handling code here:
         this.appointmentsBTN.firePropertyChange("selected", false, true);
+        this.updateAppointmentsTable();
     }//GEN-LAST:event_appointmentsBTNActionPerformed
 
     private void logoutBTNActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_logoutBTNActionPerformed
@@ -858,8 +935,8 @@ public class MainPanel extends javax.swing.JPanel {
     private void nextBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nextBtnActionPerformed
         // TODO add your handling code here:
         int totalPages = (int) Math.ceil((double) filteredPatientsList.size() / PAGE_SIZE);
-        if (currentPage < totalPages - 1) {
-            currentPage++;
+        if (currentPatientPage < totalPages - 1) {
+            currentPatientPage++;
             this.updateStudentsTable();
         }
     }//GEN-LAST:event_nextBtnActionPerformed
@@ -872,13 +949,6 @@ public class MainPanel extends javax.swing.JPanel {
         if (col == 5) {
             String studentID = this.patientsTable.getValueAt(row, 0).toString().split(",")[1].strip();
             Student student = this.studentsMap.get(studentID);
-            
-            JOptionPane.showMessageDialog(
-                    this.parentFrame,
-                    "Student ID: " + student.getStudentID(),
-                    "Student Info",
-                    JOptionPane.INFORMATION_MESSAGE
-            );
             
             new Thread(() -> {
                 StudentRecord sr = new StudentRecord(this.parentFrame, student);
@@ -906,8 +976,8 @@ public class MainPanel extends javax.swing.JPanel {
 
     private void prevBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_prevBtnActionPerformed
         // TODO add your handling code here:
-        if (currentPage > 0) {
-            currentPage--;
+        if (currentPatientPage > 0) {
+            currentPatientPage--;
             this.updateStudentsTable();
         }
     }//GEN-LAST:event_prevBtnActionPerformed
@@ -991,6 +1061,14 @@ public class MainPanel extends javax.swing.JPanel {
         AppointmentDialog dialog = new AppointmentDialog(this.parentFrame, appointment);
         dialog.setVisible(true);
     }//GEN-LAST:event_setAppointmentBTNActionPerformed
+
+    private void appointmentsTableMouseMoved(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_appointmentsTableMouseMoved
+        // TODO add your handling code here:
+    }//GEN-LAST:event_appointmentsTableMouseMoved
+
+    private void appointmentsTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_appointmentsTableMouseClicked
+        // TODO add your handling code here:
+    }//GEN-LAST:event_appointmentsTableMouseClicked
     
     private void startPolling() {
         this.studentPoller = new DataPollerThread<>(
@@ -1044,6 +1122,51 @@ public class MainPanel extends javax.swing.JPanel {
         }
     }
     
+    private void updateAppointmentsTable() {
+        this.appointmentTableModel.setRowCount(0);
+        List<Appointment> appointments = this.appointmentsList;
+        appointments.sort(Comparator.comparing(Appointment::getCreateDate).reversed().thenComparing(Appointment::getStatus, Comparator.nullsLast(Comparator.reverseOrder())));
+        for(Appointment appointment : appointments) {
+            Student student = this.studentsMap.get(appointment.getStudentID().getStudentID());
+            if (!staff.getStaffID().equals(this.staff)) {
+                String info = "%s %s. %s, %s".formatted(
+                    student.getStudentFName(),
+                    student.getStudentMName().charAt(0),
+                    student.getStudentLName(),
+                    student.getStudentID());
+                
+                LocalDate createdDate = appointment.getCreateDate()
+                    .toInstant()
+                    .atZone(ZoneId.systemDefault())
+                    .toLocalDate();
+                
+                String status = appointment.getStatus();
+                
+                switch (status) {
+                    case "pending":
+                        status = "<html><div style='text-align:center; color:blue;'>%s</div></>".formatted(status);
+                        break;
+                    case "accepted":
+                        status = "<html><div style='text-align:center; color:green;'>%s</div></>".formatted(status);
+                        break;
+                    case "rescheduled":
+                        status = "<html><div style='text-align:center; color:yellow;'>%s</div></>".formatted(status);
+                        break;
+                    case "declined":
+                        status = "<html><div style='text-align:center; color:red;'>%s</div></>".formatted(status);
+                        break;
+                }
+                this.appointmentTableModel.addRow(new Object[]{
+                    info,
+                    student.getStudentCourse(),
+                    student.getStudentCollege(),
+                    createdDate,
+                    status
+                    });
+            }
+        }
+    }
+    
     private void updateSummaryAppointments(List<Appointment> appointments) {
         this.appointmentsList = appointments;
         
@@ -1083,7 +1206,7 @@ public class MainPanel extends javax.swing.JPanel {
         this.applyFilter();
         patientsListTableModel.setNumRows(0);
         int dataSize = filteredPatientsList.size();
-        int start = currentPage * PAGE_SIZE;
+        int start = currentPatientPage * PAGE_SIZE;
         int end = Math.min(start + PAGE_SIZE, dataSize);
         for (int i = start; i < end; i++) {
             Student student = filteredPatientsList.get(i);
@@ -1104,12 +1227,12 @@ public class MainPanel extends javax.swing.JPanel {
                 );
         }
         int pages = (filteredPatientsList.size() / PAGE_SIZE) + 1;
-        String indication = "Page %d of %d".formatted(this.currentPage + 1, pages);
+        String indication = "Page %d of %d".formatted(this.currentPatientPage + 1, pages);
         
 
         pageNumbers.setText(indication);
-        prevBtn.setEnabled(currentPage > 0);
-        nextBtn.setEnabled((currentPage + 1) * PAGE_SIZE < filteredPatientsList.size());
+        prevBtn.setEnabled(currentPatientPage > 0);
+        nextBtn.setEnabled((currentPatientPage + 1) * PAGE_SIZE < filteredPatientsList.size());
     }
     
     private void applyFilter() {
@@ -1190,6 +1313,7 @@ public class MainPanel extends javax.swing.JPanel {
     private javax.swing.JButton applyBTN;
     private javax.swing.JToggleButton appointmentsBTN;
     private javax.swing.JPanel appointmentsPanel;
+    private javax.swing.JTable appointmentsTable;
     private javax.swing.JLabel clearBTN;
     private javax.swing.JPanel dash;
     private javax.swing.JToggleButton dashBTN;
@@ -1224,6 +1348,7 @@ public class MainPanel extends javax.swing.JPanel {
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
+    private javax.swing.JScrollPane jScrollPane6;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JTable jTable1;
     private javax.swing.JLayeredPane layeredPane2;
